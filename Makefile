@@ -1,6 +1,7 @@
 appname := mqtt-stresser
-namespace := inovex
+namespace := nv4re
 sources := vendor $(wildcard *.go)
+VERSION := $(shell git describe --all | sed -e 's%tags/%%g' -e 's%/%.%g' )
 
 build = GO111MODULE=on GOOS=$(1) GOARCH=$(2) go build -mod=vendor -o build/$(appname)-$(1)-$(2)$(3)
 static-build = GO111MODULE=on CGO_ENABLED=0 GOOS=$(1) GOARCH=$(2) GOARM=$(4) go build -mod=vendor -a -installsuffix cgo -o build/$(appname)-$(1)-$(2)$(4)-static$(3) .
@@ -90,15 +91,12 @@ build/$(appname)-windows-amd64-static: $(sources)
 
 
 ##### DOCKER #####
-container: clean
+container:
 	docker build \
 		--build-arg BUILD_DATE=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")\
 		--build-arg VCS_REF=$(shell git rev-parse --short HEAD) \
 	 	--build-arg VERSION=$(shell git describe --all | sed -e 's%tags/%%g' -e 's%/%.%g' ) \
 	 	-t $(namespace)/$(appname) .
-
-	 	docker run -it --rm $(namespace)/$(appname) --help
-
 
 push-container:
 	docker tag $(namespace)/$(appname) $(namespace)/$(appname):$(VERSION)
